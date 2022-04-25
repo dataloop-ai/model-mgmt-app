@@ -1,3 +1,5 @@
+import os
+
 import dtlpy as dl
 
 project_name = 'Model Management App'
@@ -114,6 +116,7 @@ codebase = dl.GitCodebase(git_url='https://github.com/dataloop-ai/model-mgmt-app
 package = project.packages.push(package_name=package_name,
                                 modules=[module_train, module_predict],
                                 slots=slots,
+                                src_path=os.getcwd(),
                                 codebase=codebase,
                                 is_global=True
                                 )
