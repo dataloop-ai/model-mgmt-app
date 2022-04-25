@@ -1,0 +1,45 @@
+{
+  "name": "model-training-utils",
+  "projectId": "$projectId",
+  "orgId": "$orgId",
+  "nodes": [
+    {
+      "id": "677375e2-1ac6-4f14-98d6-bf391486e962",
+      "inputs": [
+        {
+          "portId": "a85dac6b-d15c-452b-a634-04c39a8e78d2",
+          "type": "Dataset",
+          "name": "dataset",
+          "displayName": "Dataset"
+        }
+      ],
+      "outputs": [],
+      "metadata": {
+        "position": {
+          "x": 487.65625,
+          "y": 243.171875,
+          "z": 0
+        }
+      },
+      "name": "$funcFunctionName",
+      "type": "function",
+      "namespace": {
+        "functionName": "$funcFunctionName",
+        "moduleName": "$funcModuleName",
+        "packageName": "$funcPackageName",
+        "projectName": "$funcProjectName",
+        "serviceName": "$funcServiceName"
+      },
+      "projectId": "$funcProjectId"
+    }
+  ],
+  "connections": [],
+  "startNodes": [
+    {
+      "nodeId": "677375e2-1ac6-4f14-98d6-bf391486e962",
+      "type": "root",
+      "id": "481e6e3b-543b-45f0-bcb8-1ecf5ce4296d"
+    }
+  ],
+  "description": "Training Pipeline template from Model Management Utils"
+}
