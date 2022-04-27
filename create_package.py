@@ -11,7 +11,7 @@ package_name = 'model-mgmt-app'
 # Modules #
 ###########
 module_train = dl.PackageModule(
-    entry_point='src/model_mgmt_utils_train.py',
+    entry_point='handlers/model_mgmt_utils_train.py',
     name=package_name + '-train',
     class_name='ServiceRunner',
     init_inputs=[],
