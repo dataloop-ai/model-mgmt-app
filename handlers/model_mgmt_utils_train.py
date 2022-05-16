@@ -58,15 +58,16 @@ class ServiceRunner(dl.BaseServiceRunner):
 
         def on_epoch_end_callback(i_epoch, n_epoch):
             if progress is not None:
-                progress.update(progress=int(100 * i_epoch / n_epoch),
-                                message='finished epoc: {}'.format(i_epoch))
+                progress.update(progress=float((i_epoch + 1) / n_epoch),
+                                message='finished epoch: {}/{}'.format(i_epoch, n_epoch))
 
         adapter.train(data_path=data_path,
                       output_path=output_path,
                       on_epoch_end=on_epoch_end,
                       on_epoch_end_callback=on_epoch_end_callback)
         if progress is not None:
-            progress.update(message='saving snapshot', progress=95 / 100)
+            progress.update(message='saving snapshot',
+                            progress=95 / 100)
 
         adapter.save_to_snapshot(local_path=output_path, replace=True)
 
