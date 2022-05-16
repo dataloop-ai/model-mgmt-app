@@ -48,17 +48,22 @@ class ServiceRunner(dl.BaseServiceRunner):
             logger.debug("Snapshot\n{}\n{}".format('=' * 8, snapshot.print(to_return=True)))
             adapter.load_from_snapshot(snapshot)
 
-        root_path, data_path, output_path = adapter.prepare_training(
-            root_path=os.path.join('tmp', snapshot.id))
+        root_path, data_path, output_path = adapter.prepare_training(root_path=os.path.join('tmp', snapshot.id))
         # Start the Train
         logger.info("Training {m_name!r} with snapshot {s_name!r} on data {d_path!r}".
                     format(m_name=adapter.model_name, s_name=snapshot.id, d_path=data_path))
         if progress is not None:
             progress.update(message='starting training')
 
+        def on_epoch_end_callback(i_epoch, n_epoch):
+            if progress is not None:
+                progress.update(progress=int(100 * i_epoch / n_epoch),
+                                message='finished epoc: {}'.format(i_epoch))
+
         adapter.train(data_path=data_path,
                       output_path=output_path,
-                      on_epoch_end=on_epoch_end)
+                      on_epoch_end=on_epoch_end,
+                      on_epoch_end_callback=on_epoch_end_callback)
         if progress is not None:
             progress.update(message='saving snapshot', progress=95 / 100)
 
