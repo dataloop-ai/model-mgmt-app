@@ -31,7 +31,8 @@ class ServiceRunner(dl.BaseServiceRunner):
             configuration is as defined in snapshot.configuration
             upload the output the the snapshot's bucket (snapshot.bucket)
         """
-
+        if isinstance(snapshot, str):
+            snapshot = dl.snapshots.get(snapshot_id=snapshot)
         logger.info("Received {s} for training".format(s=snapshot.id))
 
         def on_epoch_end(epoch, n_epoch):
