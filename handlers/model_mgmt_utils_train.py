@@ -58,7 +58,7 @@ class ServiceRunner(dl.BaseServiceRunner):
 
         def on_epoch_end_callback(i_epoch, n_epoch):
             if progress is not None:
-                progress.update(progress=float((i_epoch + 1) / n_epoch),
+                progress.update(progress=int(100 * (i_epoch + 1) / n_epoch),
                                 message='finished epoch: {}/{}'.format(i_epoch, n_epoch))
 
         adapter.train(data_path=data_path,
@@ -67,7 +67,7 @@ class ServiceRunner(dl.BaseServiceRunner):
                       on_epoch_end_callback=on_epoch_end_callback)
         if progress is not None:
             progress.update(message='saving snapshot',
-                            progress=95 / 100)
+                            progress=99)
 
         adapter.save_to_snapshot(local_path=output_path, replace=True)
 
@@ -149,7 +149,7 @@ class ServiceRunner(dl.BaseServiceRunner):
             filters = dl.Filters()
             filters.custom_filter = t_filters
         if progress is not None:
-            progress.update(message='preparing dataset', progress=5 / 100)
+            progress.update(message='preparing dataset', progress=5)
 
         partitions = {dl.SnapshotPartitionType.TRAIN: 0.8,
                       dl.SnapshotPartitionType.VALIDATION: 0.2}
@@ -164,7 +164,7 @@ class ServiceRunner(dl.BaseServiceRunner):
             configuration = dict()
 
         if progress is not None:
-            progress.update(message='creating snapshot', progress=10 / 100)
+            progress.update(message='creating snapshot', progress=10)
 
         bucket = project.buckets.create(bucket_type=dl.BucketType.ITEM,
                                         model_name=model.name,
