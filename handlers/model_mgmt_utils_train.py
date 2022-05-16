@@ -77,7 +77,7 @@ class ServiceRunner(dl.BaseServiceRunner):
         if cleanup:
             shutil.rmtree(output_path, ignore_errors=True)
 
-        return adapter.snapshot
+        return adapter.snapshot.id
 
     def train_from_dataset(self,
                            from_snapshot: dl.Snapshot,

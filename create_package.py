@@ -24,7 +24,7 @@ module_train = dl.PackageModule(
                 dl.FunctionIO(type=dl.PackageInputType.SNAPSHOT, name='snapshot'),
                 dl.FunctionIO(type=dl.PackageInputType.JSON, name='cleanup'),
             ],
-            outputs=[dl.FunctionIO(type=dl.PackageInputType.JSON, name='snapshot_id')]
+            outputs=[dl.FunctionIO(type=dl.PackageInputType.SNAPSHOT, name='snapshot')]
         ),
         dl.PackageFunction(
             name='train_from_dataset',
