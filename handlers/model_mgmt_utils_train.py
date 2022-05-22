@@ -23,7 +23,8 @@ class ServiceRunner(dl.BaseServiceRunner):
     def train_on_snapshot(self,
                           snapshot: dl.Snapshot,
                           cleanup=False,
-                          progress: dl.Progress = None):
+                          progress: dl.Progress = None,
+                          context: dl.Context = None):
         # FROM PARENT
         """
             Train on existing snapshot.
@@ -31,52 +32,61 @@ class ServiceRunner(dl.BaseServiceRunner):
             configuration is as defined in snapshot.configuration
             upload the output the the snapshot's bucket (snapshot.bucket)
         """
-        if isinstance(snapshot, str):
-            snapshot = dl.snapshots.get(snapshot_id=snapshot)
-        logger.info("Received {s} for training".format(s=snapshot.id))
+        try:
+            if isinstance(snapshot, str):
+                snapshot = dl.snapshots.get(snapshot_id=snapshot)
+            logger.info("Received {s} for training".format(s=snapshot.id))
+            snapshot.status = 'training'
+            if 'system' not in snapshot.metadata:
+                snapshot.metadata['system'] = dict()
+            snapshot.metadata['system']['trainExecutionId'] = context.execution_id
+            snapshot.update()
 
-        def on_epoch_end(epoch, n_epoch):
+            def on_epoch_end(epoch, n_epoch):
+                if progress is not None:
+                    progress.update(message='training epoch: {}/{}'.format(epoch, n_epoch), progress=epoch / n_epoch)
+
+            model = snapshot.model
+
+            logger.info("Building Model {n} ({i!r})".format(n=model.name, i=model.id))
+            adapter = model.build()
+
+            if snapshot is not None:
+                logger.info("Loading Adapter with: {n} ({i!r})".format(n=snapshot.name, i=snapshot.id))
+                logger.debug("Snapshot\n{}\n{}".format('=' * 8, snapshot.print(to_return=True)))
+                adapter.load_from_snapshot(snapshot)
+
+            root_path, data_path, output_path = adapter.prepare_training(root_path=os.path.join('tmp', snapshot.id))
+            # Start the Train
+            logger.info("Training {m_name!r} with snapshot {s_name!r} on data {d_path!r}".
+                        format(m_name=adapter.model_name, s_name=snapshot.id, d_path=data_path))
             if progress is not None:
-                progress.update(message='training epoch: {}/{}'.format(epoch, n_epoch), progress=epoch / n_epoch)
+                progress.update(message='starting training')
 
-        model = snapshot.model
+            def on_epoch_end_callback(i_epoch, n_epoch):
+                if progress is not None:
+                    progress.update(progress=int(100 * (i_epoch + 1) / n_epoch),
+                                    message='finished epoch: {}/{}'.format(i_epoch, n_epoch))
 
-        logger.info("Building Model {n} ({i!r})".format(n=model.name, i=model.id))
-        adapter = model.build()
-
-        if snapshot is not None:
-            logger.info("Loading Adapter with: {n} ({i!r})".format(n=snapshot.name, i=snapshot.id))
-            logger.debug("Snapshot\n{}\n{}".format('=' * 8, snapshot.print(to_return=True)))
-            adapter.load_from_snapshot(snapshot)
-
-        root_path, data_path, output_path = adapter.prepare_training(root_path=os.path.join('tmp', snapshot.id))
-        # Start the Train
-        logger.info("Training {m_name!r} with snapshot {s_name!r} on data {d_path!r}".
-                    format(m_name=adapter.model_name, s_name=snapshot.id, d_path=data_path))
-        if progress is not None:
-            progress.update(message='starting training')
-
-        def on_epoch_end_callback(i_epoch, n_epoch):
+            adapter.train(data_path=data_path,
+                          output_path=output_path,
+                          on_epoch_end=on_epoch_end,
+                          on_epoch_end_callback=on_epoch_end_callback)
             if progress is not None:
-                progress.update(progress=int(100 * (i_epoch + 1) / n_epoch),
-                                message='finished epoch: {}/{}'.format(i_epoch, n_epoch))
+                progress.update(message='saving snapshot',
+                                progress=99)
 
-        adapter.train(data_path=data_path,
-                      output_path=output_path,
-                      on_epoch_end=on_epoch_end,
-                      on_epoch_end_callback=on_epoch_end_callback)
-        if progress is not None:
-            progress.update(message='saving snapshot',
-                            progress=99)
+            adapter.save_to_snapshot(local_path=output_path, replace=True)
 
-        adapter.save_to_snapshot(local_path=output_path, replace=True)
-
-        ###########
-        # cleanup #
-        ###########
-        if cleanup:
-            shutil.rmtree(output_path, ignore_errors=True)
-
+            ###########
+            # cleanup #
+            ###########
+            if cleanup:
+                shutil.rmtree(output_path, ignore_errors=True)
+        except Exception:
+            snapshot.status = 'training'
+            snapshot.update()
+            raise
         return adapter.snapshot.id
 
     def train_from_dataset(self,
